@@ -1,50 +1,40 @@
+package models;
+
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Stack;
 
-public class BST <K extends Comparable<K>,V>{
+public class BST <K extends Comparable<K>,V> implements Iterable<BST<K, V>.NodeWrapper>{
     private Node root;
     private int size=0;
 
-    private class Node{
-        private K key;
-        private V value;
-        private Node right,left;
-        public Node(K key,V value){
-            this.key=key;
-            this.value=value;
-            right=null;
-            left=null;
+    private class Node {
+        K key;
+        V value;
+        Node left, right;
+
+        public Node(K key, V value) {
+            this.key = key;
+            this.value = value;
         }
     }
 
-    private class Entry implements Map.Entry<K, V> {
-        private K key;
-        private V value;
+    public class NodeWrapper {
+        private final K key;
+        private final V value;
 
-        public Entry(K key, V value) {
+        public NodeWrapper(K key, V value) {
             this.key = key;
             this.value = value;
         }
 
-        @Override
         public K getKey() {
             return key;
         }
 
-        @Override
         public V getValue() {
             return value;
         }
-
-        @Override
-        public V setValue(V value) {
-            V oldValue = this.value;
-            this.value = value;
-            return oldValue;
-        }
     }
-
 
     public int size(){
         return size;
@@ -158,6 +148,9 @@ public class BST <K extends Comparable<K>,V>{
             }
             min.left=current.left;
         }
+        if(current==null){
+            return;
+        }
         size--;
     }
 
@@ -173,42 +166,41 @@ public class BST <K extends Comparable<K>,V>{
             parentOfMin.left=min.right;
             min.right=node.right;
         }
+        min.left=node.left;
         return min;
     }
 
-    public Iterator<Map.Entry<K,V>> iterator() {
-        return new Iterator<Map.Entry<K,V>>() {
-            private Stack<Node> stack = new Stack<>();
 
-            {
-                Node current = root;
-                while (current != null) {
-                    stack.push(current);
-                    current = current.left;
-                }
-            }
-
-            @Override
-            public boolean hasNext() {
-                return !stack.isEmpty();
-            }
-
-            @Override
-            public Map.Entry<K,V> next() {
-                Node node = stack.pop();
-                K key = node.key;
-                V value = node.value;
-
-                Node current = node.right;
-                while (current != null) {
-                    stack.push(current);
-                    current = current.left;
-                }
-
-                return new Entry(key, value);
-            }
-        };
+    @Override
+    public Iterator<NodeWrapper> iterator() {
+        return new BSTIterator();
     }
 
+    // Логика обхода in-order
+    private class BSTIterator implements Iterator<NodeWrapper> {
+        private Stack<Node> stack = new Stack<>();
 
+        public BSTIterator() {
+            pushLeft(root);
+        }
+
+        private void pushLeft(Node node) {
+            while (node != null) {
+                stack.push(node);
+                node = node.left;
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !stack.isEmpty();
+        }
+
+        @Override
+        public NodeWrapper next() {
+            Node node = stack.pop();
+            pushLeft(node.right);
+            return new NodeWrapper(node.key, node.value);
+        }
+    }
 }
